@@ -69,3 +69,18 @@ Finds the next game to watch based on the current stadium and the schedule.
 2. Read from json/games_schedule.json
 3. Find the next game to watch based on the current stadium and the schedule
 4. Write the results to json/games_watched.json
+
+### Original Problem Statement
+
+#### The Traveling Baseball Fan Problem
+
+Taylor is a huge baseball fan. They’re such a huge baseball fan, in fact, that they’re going to take a sabbatical from work to see as many baseball teams as they can next year. The problem is they don’t know when and for how long they should take off in order to see the most teams. They want to see one game every day for as long as possible.
+
+##### Taylor’s Plan
+
+Travel to anywhere in the US and rent a car to begin their epic baseball journey, starting point doesn’t matter.
+See a consecutive baseball game each and every day for as long as they possibly can.
+Between games, travel for as much as 6 hours (driving), even through the night if needed!
+End the trip at any point in the US, final location doesn’t matter.
+If they end up doubling back to a place they’ve already been to, that’s okay – more baseball never hurt anyone!
+The MLB has a JSON endpoint for scheduling - https://statsapi.mlb.com/api/v1/schedule/games/?sportId=1&startDate=2023-03-30&endDate=2023-10-01 - and the Google Maps API might give a good sense of how long it would take to travel among stadiums. Can we help Taylor out?
