@@ -1,9 +1,9 @@
-// uses json/games_from_mlb_api.json to get unique stadium names
+// uses games_from_mlb_api.json to get unique stadium names
 // puts output in json/stadiums.json
 
 const fs = require('fs');
 const uniqueVenues = new Set();
-fs.readFile('json/games_from_mlb_api.json', 'utf8', (err, data) => {
+fs.readFile('games_from_mlb_api.json', 'utf8', (err, data) => {
 	if (err) {
 		console.error('Error reading the file:', err);
 		return;

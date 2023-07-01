@@ -14,7 +14,6 @@ fs.readFile('json/stadiums.json', 'utf8', (err, jsonString) => {
 	const data = JSON.parse(jsonString).stadiums;
 
 	const promises = data.map(item => {
-		console.log(item.name);
 		return axios
 			.get(
 				`https://maps.googleapis.com/maps/api/geocode/json?address=${item.name}=&key=${key}`
@@ -26,7 +25,6 @@ fs.readFile('json/stadiums.json', 'utf8', (err, jsonString) => {
 	Promise.all(promises)
 		.then(responses => {
 			const stadiumLocations = responses.map(response => {
-				console.log(response);
 				if (response.results.length > 0) {
 					return response.results[0].geometry.location;
 				}

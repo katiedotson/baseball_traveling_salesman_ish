@@ -6,16 +6,11 @@
 
 const fs = require('fs');
 
-let currentStadium = {};
 let gamesWatched = [];
 let stadiumVisits = {};
+let currentStadium = { name: 'Kauffman Stadium' };
 
-function buildWatchedGame(date, stadium, schedule) {
-	const game = schedule
-		.find(day => day.date === date)
-		.games.find(
-			game => game.stadium.toLowerCase() === stadium.name.toLowerCase()
-		);
+function buildWatchedGame(date, stadium, game) {
 	return {
 		date,
 		stadium,
@@ -24,13 +19,21 @@ function buildWatchedGame(date, stadium, schedule) {
 	};
 }
 
-function findNextGame(currentDate, stadiums, schedule) {
-	let nextDayGames = schedule.find(
+function findNextGame(i, stadiums, schedule) {
+	if (i >= schedule.length) {
+		saveGames();
+		return;
+	}
+
+	let nextDaySchedule = schedule.find(
 		day =>
-			new Date(day.date).getTime() ===
-			new Date(currentDate).getTime() + 86400000
+			new Date(day.date).getTime() >= new Date(schedule[i].date).getTime()
 	);
-	if (!nextDayGames) return null;
+
+	if (!nextDaySchedule || nextDaySchedule.games.length === 0) {
+		findNextGame(i + 1, stadiums, schedule);
+		return;
+	}
 
 	let matchingStadium = stadiums.find(
 		stadium =>
@@ -44,13 +47,43 @@ function findNextGame(currentDate, stadiums, schedule) {
 		return aVisits - bVisits;
 	});
 
-	let nextStadium = sortedRoutes.find(route =>
-		nextDayGames.games.find(
-			game => game.stadium.toLowerCase() === route.name.toLowerCase()
-		)
-	);
+	let nextStadiumAndGame = sortedRoutes
+		.map(route => ({
+			stadium: route,
+			game: nextDaySchedule.games.find(
+				game => game.stadium.toLowerCase() === route.name.toLowerCase()
+			)
+		}))
+		.find(item => item.game != null);
 
-	return nextStadium;
+	if (nextStadiumAndGame) {
+		currentStadium = nextStadiumAndGame.stadium;
+		stadiumVisits[currentStadium.name] =
+			(stadiumVisits[currentStadium.name] || 0) + 1;
+		gamesWatched.push(
+			buildWatchedGame(
+				nextDaySchedule.date,
+				currentStadium,
+				nextStadiumAndGame.game
+			)
+		);
+	}
+
+	findNextGame(i + 1, stadiums, schedule);
+}
+
+function saveGames() {
+	fs.writeFile(
+		'json/games_watched.json',
+		JSON.stringify(gamesWatched, null, 2),
+		err => {
+			if (err) {
+				console.error('Error writing the file:', err);
+				return;
+			}
+			console.log('Done!');
+		}
+	);
 }
 
 fs.readFile(
@@ -73,55 +106,20 @@ fs.readFile(
 				let stadiums = JSON.parse(stadiumsUnparsed);
 				let schedule = JSON.parse(scheduleUnparsed);
 
-				for (let i = 0; i < schedule.length; i++) {
-					if (i === 0) {
-						currentStadium = { name: 'Kauffman Stadium' };
-						stadiumVisits[currentStadium] = 1;
+				stadiumVisits[currentStadium.name] = 1;
+				gamesWatched.push(
+					buildWatchedGame(
+						schedule[0].date,
+						currentStadium,
+						schedule[0].games.find(
+							game =>
+								game.stadium.toLowerCase() ===
+								currentStadium.name.toLowerCase()
+						)
+					)
+				);
 
-						gamesWatched.push(
-							buildWatchedGame(
-								schedule[i].date,
-								currentStadium,
-								schedule
-							)
-						);
-					} else {
-						currentStadium = findNextGame(
-							schedule[i - 1].date,
-							stadiums,
-							schedule
-						);
-
-						if (currentStadium) {
-							stadiumVisits[currentStadium.name] =
-								(stadiumVisits[currentStadium.name] || 0) + 1;
-
-							gamesWatched.push(
-								buildWatchedGame(
-									schedule[i].date,
-									currentStadium,
-									schedule
-								)
-							);
-						} else {
-							fs.writeFile(
-								'json/games_watched.json',
-								JSON.stringify(gamesWatched, null, 2),
-								err => {
-									if (err) {
-										console.error(
-											'Error writing the file:',
-											err
-										);
-										return;
-									}
-									console.log('Done!');
-								}
-							);
-							break;
-						}
-					}
-				}
+				findNextGame(1, stadiums, schedule);
 			}
 		);
 	}
